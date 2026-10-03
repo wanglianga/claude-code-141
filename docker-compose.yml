@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:15
+    container_name: canteen-db
+    environment:
+      POSTGRES_DB: campus_food
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d campus_food"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    container_name: canteen-app
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/campus_food
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      # 生产环境务必替换为强随机值
+      JWT_SECRET: canteen-procurement-dev-secret-key-please-override-0123456789abcdef
+      SEED_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
